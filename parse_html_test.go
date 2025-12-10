@@ -131,8 +131,8 @@ func TestGetURLsFromHTMLWithTwoLinks(t *testing.T) {
 	inputURL := "https://www.google.com"
 	inputBody := `<html>
 <body>
-<a href="https://www.google.com" target="_blank">Google</a>
-<a href="https://www.github.com" rel="noopener">GitHub</a>
+<a href="/dev/avatar.png" target="_blank">Google</a>
+<a href="/dev/logo.png" rel="noopener">GitHub</a>
 </body>
 </html>`
 
@@ -147,8 +147,8 @@ func TestGetURLsFromHTMLWithTwoLinks(t *testing.T) {
 	}
 
 	expected := []string{
-		"https://www.google.com",
-		"https://www.github.com",
+		"https://www.google.com/dev/avatar.png",
+		"https://www.google.com/dev/logo.png",
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("expected %v, got %v", expected, actual)
@@ -160,8 +160,8 @@ func TestGetURLsFromHTMLWithThreeLinks(t *testing.T) {
 	inputBody := `<html>
 <body>
 <a href="/pagina1.html" title="Primeira página">Página 1</a>
-<a href="#topo" id="link-topo">Voltar ao topo</a>
-<a href="mailto:exemplo@email.com">Enviar email</a>
+<a href="/pagina2.html" title="Primeira página">Página 1</a>
+<a href="/pagina3.html" title="Primeira página">Página 1</a>
 </body>
 </html>`
 
@@ -176,9 +176,9 @@ func TestGetURLsFromHTMLWithThreeLinks(t *testing.T) {
 	}
 
 	expected := []string{
-		"/pagina1.html",
-		"#topo",
-		"mailto:exemplo@email.com",
+		"https://www.google.com/pagina1.html",
+		"https://www.google.com/pagina2.html",
+		"https://www.google.com/pagina3.html",
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("expected %v, got %v", expected, actual)

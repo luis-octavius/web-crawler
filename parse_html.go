@@ -22,7 +22,6 @@ func getH1FromHTML(html string) string {
 		return header
 	}
 
-	log.Println("Header: ", header)
 	return header
 }
 
@@ -46,10 +45,13 @@ func getFirstParagraphFromHTML(html string) string {
 
 	firstParagraph = doc.Find("p").First().Text()
 
-	log.Println("First p: ", firstParagraph)
 	return firstParagraph
 }
 
+// getURLsFromHTML receives a HTML body and a base URL to reconstruct
+// absolute URLs, after that, it returns an array of all the reconstructed URLs
+//
+// returns an error if the creation of the document with goquery fails
 func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 	reader := strings.NewReader(htmlBody)
 
@@ -61,7 +63,14 @@ func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 	parsedURLs := []string{}
 	doc.Find("a").Each(func(_ int, s *goquery.Selection) {
 		url, _ := s.Attr("href")
-		parsedURLs = append(parsedURLs, url)
+
+		// checks if the actual URL is equal to baseURL
+		if url != baseURL.String() {
+			absoluteURL := baseURL.JoinPath(url)
+			parsedURLs = append(parsedURLs, absoluteURL.String())
+		} else {
+			parsedURLs = append(parsedURLs, baseURL.String())
+		}
 	})
 
 	for _, url := range parsedURLs {
@@ -71,6 +80,11 @@ func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 	return parsedURLs, nil
 }
 
+// getImagesFromHTML receives a HTML body and a base URL to reconstruct
+// absolute URLs from the images, after that, it returns an array of all
+// the reconstructed links
+//
+// returns an error if the creation of the document with goquery fails
 func getImagesFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 	reader := strings.NewReader(htmlBody)
 
@@ -82,8 +96,9 @@ func getImagesFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 	parsedURLs := []string{}
 	doc.Find("img").Each(func(_ int, s *goquery.Selection) {
 		url, _ := s.Attr("src")
-		absoluteURL := baseURL.String() + url
-		parsedURLs = append(parsedURLs, absoluteURL)
+		absoluteURL := baseURL.JoinPath(url)
+		log.Println("absolute URL: ", absoluteURL)
+		parsedURLs = append(parsedURLs, absoluteURL.String())
 	})
 
 	return parsedURLs, nil
