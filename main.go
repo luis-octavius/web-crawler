@@ -1,9 +1,32 @@
-package main 
+package main
 
 import (
-	"fmt"
+	"log"
+	"os"
 )
 
 func main() {
-	fmt.Println("Hello, World!")
+
+	args := os.Args
+	actualArgs := args[1:]
+	if len(actualArgs) < 1 {
+		log.Println("no website provided")
+		os.Exit(1)
+	}
+
+	if len(actualArgs) > 1 {
+		log.Println("too many arguments provided")
+		os.Exit(1)
+	}
+
+	BASE_URL := actualArgs[0]
+	log.Println("starting crawl of: ", BASE_URL)
+
+	html, err := getHTML(BASE_URL)
+	if err != nil {
+		log.Printf("error getting HTML from %v", BASE_URL)
+		os.Exit(1)
+	}
+
+	log.Println(html)
 }
