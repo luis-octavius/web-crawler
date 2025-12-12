@@ -22,11 +22,13 @@ func main() {
 	BASE_URL := actualArgs[0]
 	log.Println("starting crawl of: ", BASE_URL)
 
-	html, err := getHTML(BASE_URL)
-	if err != nil {
-		log.Printf("error getting HTML from %v", BASE_URL)
-		os.Exit(1)
-	}
+	// html, err := getHTML(BASE_URL)
+	// if err != nil {
+	// 	log.Printf("error getting the html of %v: %v", BASE_URL, err)
+	// 	os.Exit(1)
+	// }
 
-	log.Println(html)
+	pages := make(map[string]int)
+	crawlPage(BASE_URL, BASE_URL, pages)
+
 }
