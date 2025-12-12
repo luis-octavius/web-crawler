@@ -14,12 +14,6 @@ type PageData struct {
 }
 
 func extractPageData(html, pageURL string) PageData {
-	// normalizedURL, err := normalizeURL(pageURL)
-	// if err != nil {
-	// 	log.Println("error normalizing page URL: ", err)
-	// 	return PageData{}
-	// }
-
 	URL, err := url.Parse(pageURL)
 	if err != nil {
 		log.Println("error parsing page URL parameter: ", err)
@@ -27,16 +21,8 @@ func extractPageData(html, pageURL string) PageData {
 	}
 
 	header := getH1FromHTML(html)
-	if header == "" {
-		log.Println("error getting header from HTML")
-		return PageData{}
-	}
 
 	firstParagraph := getFirstParagraphFromHTML(html)
-	if firstParagraph == "" {
-		log.Println("error getting the first paragraph from HTML")
-		return PageData{}
-	}
 
 	URLs, err := getURLsFromHTML(html, URL)
 	if err != nil {
