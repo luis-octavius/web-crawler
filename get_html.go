@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 var Client = &http.Client{}
@@ -28,7 +29,7 @@ func getHTML(rawURL string) (string, error) {
 	}
 
 	contentType := res.Header.Get("Content-Type")
-	if contentType != "text/html; charset=utf-8" {
+	if !strings.Contains(contentType, "text/html") {
 		return "", fmt.Errorf("content type is not text/html: %v", contentType)
 	}
 
