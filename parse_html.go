@@ -73,10 +73,6 @@ func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 		}
 	})
 
-	for _, url := range parsedURLs {
-		fmt.Println("URL: ", url)
-	}
-
 	return parsedURLs, nil
 }
 
@@ -94,6 +90,8 @@ func getImagesFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 	}
 
 	parsedURLs := []string{}
+	// find the img URL then structure the absolute URL of the img
+	// for each URL found, then append it to the struct
 	doc.Find("img").Each(func(_ int, s *goquery.Selection) {
 		url, _ := s.Attr("src")
 		absoluteURL := baseURL.JoinPath(url)
