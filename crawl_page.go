@@ -6,11 +6,30 @@ import (
 	"net/url"
 )
 
-func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
+// crawlPage recursively crawls a current url
+// it sends a signal to the concurrencyControl channel
+// for controlling the goroutine executed from main
+//
+// returns an error if:
+// - the domain of the current URL is different than the base URL
+// - normalizeURL returns an error
+// - isFirst returns false
+func (cfg *config) crawlPage(rawCurrentURL string) {
+	// sends a signal into the concurrencyControl channel
+	cfg.concurrencyControl <- struct{}{}
 
-	isSameDomain, err := checkDomain(rawBaseURL, rawCurrentURL)
-	if !isSameDomain {
-		log.Printf("error: %v\n", err)
+	// when the function returns receives the signal sent before
+	defer func() {
+		<-cfg.concurrencyControl
+		cfg.wg.Done()
+	}()
+
+	currentURL, err := url.Parse(rawCurrentURL)
+	if err != nil {
+		fmt.Printf("error - crawlPage: couldn't parse URL '%s': %v", rawCurrentURL, err)
+	}
+
+	if currentURL.Hostname() != cfg.baseURL.Hostname() {
 		return
 	}
 
@@ -20,42 +39,24 @@ func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
 		return
 	}
 
-	page, ok := pages[normalizedURL]
-	if ok {
-		page += 1
+	isFirst := cfg.addPageVisit(normalizedURL)
+	if !isFirst {
 		return
-	} else {
-		pages[normalizedURL] = 1
 	}
+
+	fmt.Printf("crawling %s\n", rawCurrentURL)
 
 	html, err := getHTML(rawCurrentURL)
-	fmt.Println("HTML: ", html)
+	if err != nil {
+		fmt.Printf("error - getHTML: %v\n", err)
+		return
+	}
 
 	pageData := extractPageData(html, rawCurrentURL)
-	fmt.Println("Page Data: ", pageData)
+	cfg.setPageData(normalizedURL, pageData)
 
 	for _, URL := range pageData.OutgoingLinks {
-		crawlPage(rawBaseURL, URL, pages)
+		cfg.wg.Add(1)
+		go cfg.crawlPage(URL)
 	}
-}
-
-func checkDomain(rawBaseURL, rawCurrentURL string) (bool, error) {
-	parsedBaseURL, err := url.Parse(rawBaseURL)
-	if err != nil {
-		return false, fmt.Errorf("error parsing base URL: %v", err)
-	}
-
-	parsedCurrentURL, err := url.Parse(rawCurrentURL)
-	if err != nil {
-		return false, fmt.Errorf("error parsing current URL: %v", err)
-	}
-
-	baseDomain := parsedBaseURL.Hostname()
-	currentDomain := parsedCurrentURL.Hostname()
-
-	if baseDomain != currentDomain {
-		return false, fmt.Errorf("base URL with domain %v has a different domain than current URL %v", baseDomain, currentDomain)
-	}
-
-	return true, nil
 }
