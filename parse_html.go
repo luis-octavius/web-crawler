@@ -22,7 +22,7 @@ func getH1FromHTML(html string) string {
 		return header
 	}
 
-	return header
+	return strings.TrimSpace(header)
 }
 
 func getFirstParagraphFromHTML(html string) string {
@@ -45,7 +45,7 @@ func getFirstParagraphFromHTML(html string) string {
 
 	firstParagraph = doc.Find("p").First().Text()
 
-	return firstParagraph
+	return strings.TrimSpace(firstParagraph)
 }
 
 // getURLsFromHTML receives a HTML body and a base URL to reconstruct
