@@ -34,6 +34,12 @@ func (cfg *config) setPageData(normalizedURL string, data PageData) {
 	cfg.pages[normalizedURL] = data
 }
 
+func (cfg *config) pagesLen() int {
+	cfg.mu.Lock()
+	defer cfg.mu.Unlock()
+	return len(cfg.pages)
+}
+
 func configure(rawBaseURL string, maxPages, maxConcurrency int) (*config, error) {
 	baseURL, err := url.Parse(rawBaseURL)
 	if err != nil {
