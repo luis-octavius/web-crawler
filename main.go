@@ -40,9 +40,7 @@ func main() {
 	go cfg.crawlPage(rawBaseURL)
 	cfg.wg.Wait()
 
-	// for normalizedURL, count := range cfg.pages {
-	// 	fmt.Printf("%d - %s\n", count, normalizedURL)
-	// }
+	err = writeCSVReport(cfg.pages, "report.csv")
 
 	elapsed := time.Now().Sub(start)
 	fmt.Printf("Execution took %v\n", elapsed)
