@@ -4,21 +4,21 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"time"
 )
 
-// crawlPage recursively crawls a current url
-// it sends a signal to the concurrencyControl channel
-// for controlling the goroutine executed from main
+// crawlPage recursivamente faz crawl de uma URL
+// Implementa rate limiting e delay entre requisições para evitar bloqueios
 //
-// returns an error if:
-// - the domain of the current URL is different than the base URL
-// - normalizeURL returns an error
-// - isFirst returns false
+// retorna um erro se:
+// - o domínio da URL atual é diferente do domínio base
+// - normalizeURL retorna um erro
+// - isFirst retorna false
 func (cfg *config) crawlPage(rawCurrentURL string) {
-	// sends a signal into the concurrencyControl channel
+	// Envia um sinal para o canal de controle de concorrência
 	cfg.concurrencyControl <- struct{}{}
 
-	// when the function returns receives the signal sent before
+	// Quando a função retorna, recebe o sinal enviado antes
 	defer func() {
 		<-cfg.concurrencyControl
 		cfg.wg.Done()
@@ -30,7 +30,8 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 
 	currentURL, err := url.Parse(rawCurrentURL)
 	if err != nil {
-		fmt.Printf("error - crawlPage: couldn't parse URL '%s': %v", rawCurrentURL, err)
+		fmt.Printf("erro - crawlPage: não foi possível fazer parse da URL '%s': %v\n", rawCurrentURL, err)
+		return
 	}
 
 	if currentURL.Hostname() != cfg.baseURL.Hostname() {
@@ -39,7 +40,7 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 
 	normalizedURL, err := normalizeURL(rawCurrentURL)
 	if err != nil {
-		log.Printf("error: %v\n", err)
+		log.Printf("erro ao normalizar URL: %v\n", err)
 		return
 	}
 
@@ -48,16 +49,34 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 		return
 	}
 
-	// fmt.Printf("crawling %s\n", rawCurrentURL)
+	// Aplica rate limiting antes de fazer a requisição
+	if cfg.rateLimiter != nil {
+		if err := cfg.rateLimiter.Wait(cfg.ctx); err != nil {
+			log.Printf("erro no rate limiter: %v\n", err)
+			return
+		}
+	}
+
+	// Adiciona delay entre requisições para ser mais "gentil"
+	if cfg.requestDelay > 0 {
+		time.Sleep(cfg.requestDelay)
+	}
+
+	// Atualiza o cliente HTTP se houver rotação de proxies
+	if cfg.proxyRotator != nil && cfg.proxyRotator.Count() > 0 {
+		Client.Transport = cfg.proxyRotator.GetTransport()
+	}
 
 	html, err := getHTML(rawCurrentURL)
 	if err != nil {
-		fmt.Printf("error - getHTML: %v\n", err)
+		log.Printf("erro ao buscar HTML de %s: %v\n", rawCurrentURL, err)
 		return
 	}
 
 	pageData := extractPageData(html, rawCurrentURL)
 	cfg.setPageData(normalizedURL, pageData)
+
+	log.Printf("✓ Crawled: %s (encontrados %d links)\n", rawCurrentURL, len(pageData.OutgoingLinks))
 
 	for _, URL := range pageData.OutgoingLinks {
 		cfg.wg.Add(1)
