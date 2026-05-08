@@ -1,4 +1,4 @@
-# Web Crawler em Go 🕷️
+# Web Crawler em Go 
 
 Um web crawler de alta performance desenvolvido em Go, com suporte a crawling concorrente, rate limiting, retry automático e rotação de proxies.
 
@@ -210,7 +210,7 @@ O crawler lida com diversos cenários de erro:
 4. **Delay entre Requisições**: Comportamento não-agressivo
 5. **Tratamento de Erros Robusto**: Retry inteligente
 
-## 🚧 Melhorias Futuras
+## Melhorias Futuras
 
 - [ ] Suporte a robots.txt
 - [ ] Suporte a sitemap.xml
